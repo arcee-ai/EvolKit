@@ -69,13 +69,6 @@ async def main():
         'evaluator': RewardModelEvaluator() if args.use_reward_model else FailureDetectorEvaluator(),
         'dev_set': dev_set
     }
-    components = {
-        'generator': OpenRouterGenerator(model='anthropic/claude-3.5-sonnet:beta'),
-        'evolver': RecurrentEvolver(OpenRouterGenerator(model='anthropic/claude-3.5-sonnet:beta')),
-        'analyzer': TrajectoryAnalyzer(OpenRouterGenerator(model='openai/gpt-4o')),
-        'evaluator': RewardModelEvaluator() if args.use_reward_model else FailureDetectorEvaluator(),
-        'dev_set': dev_set
-    }
     components['optimizer'] = WizardOptimizer(OpenRouterGenerator(model='openai/gpt-4o'), components['evaluator'])
     
     auto_evol = AutoEvol(components)
