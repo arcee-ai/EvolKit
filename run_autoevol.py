@@ -26,29 +26,18 @@ def load_and_process_dataset(dataset_name, dev_set_size=5):
     # Ensure dev_set_size is not larger than the dataset
     if dev_set_size > len(full_dataset):
         raise ValueError(f"Specified dev set size ({dev_set_size}) is larger than the dataset size ({len(full_dataset)})")
-    
+    full_filtered = []
+    for sample in full_dataset['conversations']:
+        for turn in sample:
+            if turn['from'] == 'system':
+                break
+            if turn['from'] == 'human':
+                full_filtered.append(turn['value'])
+                break
+        
     # Split the dataset
-    dev_set = full_dataset[:dev_set_size]
-    train_set = full_dataset[dev_set_size:]
-    
-    train_instructions = []
-    dev_instructions = []
-    
-    for train_sample in train_set['conversations']:
-        for turn in train_sample:
-            if turn['from'] == 'system':
-                break
-            if turn['from'] == 'human':
-                train_instructions.append(turn['value'])
-                break  # Only take the first human instruction from each conversation
-    
-    for dev_sample in dev_set['conversations']:
-        for turn in dev_sample:
-            if turn['from'] == 'system':
-                break
-            if turn['from'] == 'human':
-                dev_instructions.append(turn['value'])
-                break  # Only take the first human instruction from each conversation
+    train_instructions = full_filtered[dev_set_size:]
+    dev_instructions = full_filtered[:dev_set_size]
     
     return train_instructions, dev_instructions
     
@@ -60,6 +49,7 @@ async def main():
     parser = argparse.ArgumentParser(description="Run AutoEvol with specified parameters")
     parser.add_argument("--dataset", help="Name of the dataset on Hugging Face")
     parser.add_argument("--batch_size", type=int, default=5, help="Batch size for processing")
+    parser.add_argument("--mini_batch_size", type=int, default=5, help="Batch size for processing")
     parser.add_argument("--num_methods", type=int, default=3, help="Number of methods to use")
     parser.add_argument("--max_concurrent_batches", type=int, default=5, help="Maximum number of concurrent batches")
     parser.add_argument("--evolve_epoch", type=int, default=3, help="Maximum number of epoch for each instruction")
@@ -105,7 +95,7 @@ async def main():
 
     for i in range(0, len(train_set), args.batch_size):
         batch = train_set[i:i+args.batch_size]
-        batch_results = await auto_evol.run(batch, batch_size=args.batch_size, num_methods=args.num_methods, max_concurrent_batches=args.max_concurrent_batches, evolve_epoch=args.evolve_epoch)
+        batch_results = await auto_evol.run(batch, batch_size=args.mini_batch_size, num_methods=args.num_methods, max_concurrent_batches=args.max_concurrent_batches, evolve_epoch=args.evolve_epoch)
         all_results.extend(batch_results)
         
         current_batch = i // args.batch_size + 1
