@@ -29,7 +29,7 @@ def load_and_process_dataset(dataset_name, dev_set_size=5):
     
     # Split the dataset
     dev_set = full_dataset[:dev_set_size]
-    train_set = full_dataset[dev_set_size:dev_set_size+20]
+    train_set = full_dataset[dev_set_size:]
     
     train_instructions = []
     dev_instructions = []
