@@ -34,20 +34,19 @@ python run_autoevol.py <dataset_name> [options]
 To run AutoEvol on the 'small_tomb' dataset with custom parameters:
 
 ```bash
-python main.py qnguyen3/small_tomb --batch_size 10 --num_methods 3 --max_concurrent_batches 2 --dev_set_size 3
+python run_autoevol.py --dataset qnguyen3/small_tomb --batch_size=100 --mini_batch_size 10 --num_methods 3 --max_concurrent_batches 10 --evolve_epoch 3 --dev_set_size=3 --output_file the_tomb_evolved-3e-batch100.json --use_reward_model
 ```
 
 This command will:
 1. Load the 'qnguyen3/small_tomb' dataset from Hugging Face.
 2. Use 3 samples for the development set.
 3. Process the remaining samples in the training set.
-4. Use a batch size of 10 for processing.
+4. Use a batch size of 100 for processing.
 5. Apply 3 evolution methods for each sample in development set to find the best method 
-6. Process 2 batches concurrently.
+6. Process 10 mini-batches (10*10=100 samples) concurrently.
+7. Use the reward model
+8. Output the final evolved instructions to `the_tomb_evolved-3e-batch100.json`
 
-### Output:
-
-The script will output progress information to the console and save the results in a JSON file named `instruction_evolution_results-<dataset_name>.json` in the current directory.
 
 ### Note:
 
