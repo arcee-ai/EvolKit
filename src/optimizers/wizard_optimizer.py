@@ -48,7 +48,7 @@ class WizardOptimizer(BaseOptimizer):
 
     async def optimize(self, current_method: str, feedback: List[str], evolver: RecurrentEvolver, development_set: Optional[List] = None):
         async def generate_and_evaluate(feedback_item):
-            optimized_prompt = METHOD_EVOL_PROMPT.format(feedback=feedback_item, current_method=current_method)
+            optimized_prompt = METHOD_EVOL_PROMPT.format(current_method=current_method, feedback=feedback_item)
             evolved_method = await self.generator.agenerate(optimized_prompt, temperature=0.2)
 
             async def process_instruction(instruction):
@@ -60,7 +60,7 @@ class WizardOptimizer(BaseOptimizer):
                     response = await self.generator.agenerate(prompt=parsed_evolved_instruction, temperature=0.2)
                     return parsed_evolved_instruction, response
                 except:
-                    response = await self.generator.agenerate(prompt=parsed_evolved_instruction, temperature=0.2)
+                    response = await self.generator.agenerate(prompt=instruction, temperature=0.2)
                     return instruction, response
 
             results = await asyncio.gather(*[process_instruction(instruction) for instruction in development_set])

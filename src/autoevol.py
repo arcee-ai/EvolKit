@@ -13,7 +13,7 @@ class AutoEvol:
     async def process_instruction(self, instruction: str, num_methods: int, evolve_epoch: int = 2) -> Dict[str, Any]:
         start_time = time.time()
         instruction_stages = [instruction]
-        methods = [INITIAL_EVOLVE_METHOD.format(instruction=instruction_stages[0])]
+        methods = [INITIAL_EVOLVE_METHOD.replace("{{instruction}}", instruction_stages[0])]
         current_method = methods[0]
 
         result = {
@@ -55,9 +55,10 @@ class AutoEvol:
             evolved_instruction = await self.components['generator'].agenerate(prompt=optimized_method, temperature=0.2)
             evolved_instruction_steps = parse_steps(evolved_instruction)
             
-            if evolved_instruction_steps[-1]['step_name'] == 'Finally Rewritten Instruction':
-                evolved_instruction = evolved_instruction_steps[-1]['step_instruction']
-            else:
+            try:
+                if evolved_instruction_steps[-1]['step_name'] == 'Finally Rewritten Instruction':
+                    evolved_instruction = evolved_instruction_steps[-1]['step_instruction']
+            except:
                 print('Error: Unexpected step name in evolved instruction')
                 evolved_instruction = instruction_stages[-1]  # Append the same instruction as before
 

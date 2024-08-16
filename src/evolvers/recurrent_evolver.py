@@ -16,7 +16,7 @@ Step 3: Please execute the plan step by step and provide the #Rewritten Instruct
 
 Step 4: Please carefully review the #Rewritten Instruction# and identify any unreasonable parts. Ensure that the #Rewritten Instruction# is only a more complex version of the #Instruction#, make sure that it only adds 10 to 20 words into the "#Instruction#". Just provide the #Finally Rewritten Instruction# without any explanation.
 
-#Instruction#: {instruction}
+#Instruction#: {{instruction}}
 
 REMEMBER that you are generating a more complex version of the instruction (or question), NOT answering #Instruction#. The #Finally Rewritten Instruction# should only add 10 to 20 words the #Instruction# below.
 
@@ -60,7 +60,7 @@ class RecurrentEvolver(BaseEvolver):
         self.generator = generator
         
     async def evolve_async(self, instruction: str, evolving_method: str = None, n: int = 1) -> List[str]:
-        evol_method = evolving_method.format(instruction=instruction) if evolving_method else INITIAL_EVOLVE_METHOD.format(instruction=instruction)
+        evol_method = evolving_method if evolving_method else INITIAL_EVOLVE_METHOD.format(instruction=instruction)
         
         async def generate_single():
             return await self.generator.agenerate(evol_method)

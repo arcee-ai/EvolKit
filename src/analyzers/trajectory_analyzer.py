@@ -27,7 +27,7 @@ and so on...
 ***END OF FORMAT INSTRUCTION***
 
 Evolution Trajectory:
-{evol_trajectory}
+{{evol_trajectory}}
 """
 
 class TrajectoryAnalyzer(BaseAnalyzer):
@@ -40,7 +40,7 @@ class TrajectoryAnalyzer(BaseAnalyzer):
             Stage 0: {init_instruction}
             Stage 1: {evolved_instruction}
             """
-            trajectory_prompt = TRAJECTORY_ANALYZER_PROMPT.format(evol_trajectory=trajectory_str)
+            trajectory_prompt = TRAJECTORY_ANALYZER_PROMPT.replace('{{evol_trajectory}}', trajectory_str)
             feedback = await self.generator.agenerate(prompt=trajectory_prompt, system_prompt=TRAJECTORY_ANALYZER_SYSTEM_PROMPT, temperature=0.2)
             
             return feedback

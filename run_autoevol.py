@@ -29,21 +29,19 @@ def load_and_process_dataset(dataset_name, dev_set_size=5):
     
     # Split the dataset
     dev_set = full_dataset[:dev_set_size]
-    train_set = full_dataset[dev_set_size:]
+    train_set = full_dataset[dev_set_size:dev_set_size+20]
     
     train_instructions = []
     dev_instructions = []
     
-    for train_sample in train_set:
-        convo = train_sample['conversations']
-        for turn in convo:
+    for train_sample in train_set['conversations']:
+        for turn in train_sample:
             if turn['from'] == 'human':
                 train_instructions.append(turn['value'])
                 break  # Only take the first human instruction from each conversation
     
-    for dev_sample in dev_set:
-        convo = dev_sample['conversations']
-        for turn in convo:
+    for dev_sample in dev_set['conversations']:
+        for turn in dev_sample:
             if turn['from'] == 'human':
                 dev_instructions.append(turn['value'])
                 break  # Only take the first human instruction from each conversation
@@ -52,7 +50,7 @@ def load_and_process_dataset(dataset_name, dev_set_size=5):
     
 async def main():
     parser = argparse.ArgumentParser(description="Run AutoEvol with specified parameters")
-    parser.add_argument("dataset", help="Name of the dataset on Hugging Face")
+    parser.add_argument("--dataset", help="Name of the dataset on Hugging Face")
     parser.add_argument("--batch_size", type=int, default=5, help="Batch size for processing")
     parser.add_argument("--num_methods", type=int, default=2, help="Number of methods to use")
     parser.add_argument("--max_concurrent_batches", type=int, default=2, help="Maximum number of concurrent batches")
@@ -89,7 +87,7 @@ async def main():
     print(f"Total execution time: {total_time:.2f} seconds")
     
     print("Writing results to JSON file")
-    output_file = f'instruction_evolution_results-{args.dataset.replace("/", "-")}.json'
+    output_file = f'instruction_evolution_results-{args.dataset.replace("/", "-")}-2.json'
     with open(output_file, 'w') as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     
