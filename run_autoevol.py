@@ -36,32 +36,49 @@ def load_and_process_dataset(dataset_name, dev_set_size=5):
     
     for train_sample in train_set['conversations']:
         for turn in train_sample:
+            if turn['from'] == 'system':
+                break
             if turn['from'] == 'human':
                 train_instructions.append(turn['value'])
                 break  # Only take the first human instruction from each conversation
     
     for dev_sample in dev_set['conversations']:
         for turn in dev_sample:
+            if turn['from'] == 'system':
+                break
             if turn['from'] == 'human':
                 dev_instructions.append(turn['value'])
                 break  # Only take the first human instruction from each conversation
     
     return train_instructions, dev_instructions
     
+async def save_results(results, output_file):
+    with open(output_file, 'w') as f:
+        json.dump(results, f, indent=2, ensure_ascii=False)
+
 async def main():
     parser = argparse.ArgumentParser(description="Run AutoEvol with specified parameters")
     parser.add_argument("--dataset", help="Name of the dataset on Hugging Face")
     parser.add_argument("--batch_size", type=int, default=5, help="Batch size for processing")
-    parser.add_argument("--num_methods", type=int, default=2, help="Number of methods to use")
-    parser.add_argument("--max_concurrent_batches", type=int, default=2, help="Maximum number of concurrent batches")
-    parser.add_argument("--evolve_epoch", type=int, default=2, help="Maximum number of epoch for each instruction")
-    parser.add_argument("--use_reward_model",action="store_true",help="just a flag argument")
+    parser.add_argument("--num_methods", type=int, default=3, help="Number of methods to use")
+    parser.add_argument("--max_concurrent_batches", type=int, default=5, help="Maximum number of concurrent batches")
+    parser.add_argument("--evolve_epoch", type=int, default=3, help="Maximum number of epoch for each instruction")
+    parser.add_argument("--dev_set_size", type=int, default=5, help="Maximum samples for dev set")
+    parser.add_argument("--output_file", type=str, default='output.json', help="Name of output file")
+    parser.add_argument("--use_reward_model", action="store_true", help="just a flag argument")
     
     args = parser.parse_args()
     
     # Load and process the dataset
-    train_set, dev_set = load_and_process_dataset(args.dataset)
+    train_set, dev_set = load_and_process_dataset(args.dataset, args.dev_set_size)
     
+    components = {
+        'generator': OpenRouterGenerator(model='anthropic/claude-3.5-sonnet:beta'),
+        'evolver': RecurrentEvolver(OpenRouterGenerator(model='anthropic/claude-3.5-sonnet:beta')),
+        'analyzer': TrajectoryAnalyzer(OpenRouterGenerator(model='openai/gpt-4o')),
+        'evaluator': RewardModelEvaluator() if args.use_reward_model else FailureDetectorEvaluator(),
+        'dev_set': dev_set
+    }
     components = {
         'generator': OpenRouterGenerator(model='anthropic/claude-3.5-sonnet:beta'),
         'evolver': RecurrentEvolver(OpenRouterGenerator(model='anthropic/claude-3.5-sonnet:beta')),
@@ -80,18 +97,27 @@ async def main():
     print(f"Max concurrent batches: {args.max_concurrent_batches}")
     
     start_time = time.time()
-    results = await auto_evol.run(train_set, batch_size=args.batch_size, num_methods=args.num_methods, max_concurrent_batches=args.max_concurrent_batches, evolve_epoch=args.evolve_epoch)
+    
+    output_file = args.output_file
+    all_results = []
+    
+    total_batches = (len(train_set) + args.batch_size - 1) // args.batch_size  # Calculate total number of batches
+
+    for i in range(0, len(train_set), args.batch_size):
+        batch = train_set[i:i+args.batch_size]
+        batch_results = await auto_evol.run(batch, batch_size=args.batch_size, num_methods=args.num_methods, max_concurrent_batches=args.max_concurrent_batches, evolve_epoch=args.evolve_epoch)
+        all_results.extend(batch_results)
+        
+        current_batch = i // args.batch_size + 1
+        print(f"Done batch {current_batch}/{total_batches}")  # New print statement for batch progress
+        print(f"Batch {current_batch} completed. Saving results...")
+        await save_results(all_results, output_file)
+    
     end_time = time.time()
     total_time = end_time - start_time
     
     print(f"Total execution time: {total_time:.2f} seconds")
-    
-    print("Writing results to JSON file")
-    output_file = f'instruction_evolution_results-{args.dataset.replace("/", "-")}-2.json'
-    with open(output_file, 'w') as f:
-        json.dump(results, f, indent=2, ensure_ascii=False)
-    
-    print(f"Results written to {output_file}")
+    print(f"Final results saved to {output_file}")
 
 if __name__ == "__main__":
     asyncio.run(main())
