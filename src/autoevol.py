@@ -10,7 +10,7 @@ class AutoEvol:
     def __init__(self, components: Dict[str, Any]):
         self.components = components
 
-    async def process_instruction(self, instruction: str, num_methods: int) -> Dict[str, Any]:
+    async def process_instruction(self, instruction: str, num_methods: int, evolve_epoch: int = 2) -> Dict[str, Any]:
         start_time = time.time()
         instruction_stages = [instruction]
         methods = [INITIAL_EVOLVE_METHOD.format(instruction=instruction_stages[0])]
@@ -21,7 +21,7 @@ class AutoEvol:
             "stages": []
         }
 
-        for i in range(2):
+        for i in range(evolve_epoch):
             stage_start_time = time.time()
             stage_result = {
                 "stage": i + 1,
@@ -75,12 +75,12 @@ class AutoEvol:
         result["total_time"] = end_time - start_time
         return result
     
-    async def process_batch(self, batch: List[str], num_methods: int, pbar: tqdm) -> List[Dict[str, Any]]:
-        batch_results = await asyncio.gather(*[self.process_instruction(instruction, num_methods) for instruction in batch])
+    async def process_batch(self, batch: List[str], num_methods: int, evolve_epoch: int, pbar: tqdm) -> List[Dict[str, Any]]:
+        batch_results = await asyncio.gather(*[self.process_instruction(instruction, num_methods, evolve_epoch) for instruction in batch])
         pbar.update(len(batch))
         return batch_results
 
-    async def run(self, dataset: List[str], batch_size: int = 10, num_methods: int = 5, max_concurrent_batches: int = 2) -> List[Dict[str, Any]]:
+    async def run(self, dataset: List[str], batch_size: int = 10, num_methods: int = 5, max_concurrent_batches: int = 2, evolve_epoch: int = 2) -> List[Dict[str, Any]]:
         print(f"Starting dataset processing. Dataset size: {len(dataset)}, Max concurrent batches: {max_concurrent_batches}")
         start_time = time.time()
 
@@ -91,7 +91,7 @@ class AutoEvol:
 
         async def process_batch_with_semaphore(batch):
             async with semaphore:
-                return await self.process_batch(batch, num_methods, pbar)
+                return await self.process_batch(batch, num_methods, evolve_epoch, pbar)
 
         results = await asyncio.gather(*[process_batch_with_semaphore(batch) for batch in batches])
 

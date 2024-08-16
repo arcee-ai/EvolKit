@@ -56,6 +56,7 @@ async def main():
     parser.add_argument("--batch_size", type=int, default=5, help="Batch size for processing")
     parser.add_argument("--num_methods", type=int, default=2, help="Number of methods to use")
     parser.add_argument("--max_concurrent_batches", type=int, default=2, help="Maximum number of concurrent batches")
+    parser.add_argument("--evolve_epoch", type=int, default=2, help="Maximum number of epoch for each instruction")
     parser.add_argument("--use_reward_model",action="store_true",help="just a flag argument")
     
     args = parser.parse_args()
@@ -81,7 +82,7 @@ async def main():
     print(f"Max concurrent batches: {args.max_concurrent_batches}")
     
     start_time = time.time()
-    results = await auto_evol.run(train_set, batch_size=args.batch_size, num_methods=args.num_methods, max_concurrent_batches=args.max_concurrent_batches)
+    results = await auto_evol.run(train_set, batch_size=args.batch_size, num_methods=args.num_methods, max_concurrent_batches=args.max_concurrent_batches, evolve_epoch=args.evolve_epoch)
     end_time = time.time()
     total_time = end_time - start_time
     
