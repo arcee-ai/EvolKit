@@ -29,7 +29,7 @@ Step 2:
 #Plan#
 Explain how to create a comprehensive plan based on the Methods List
 
-[Note]Add as many steps here as you want to achieve the best method but N cannot be more than 7. The steps should align with the instruction domain/topic, and should not involve any tools or visualization, it should be text-only methods. The last step should always be #Finally Rewritten Instruction#.
+[Note]Add more steps here as you want to achieve the best method. The steps should align with the instruction domain/topic, and should not involve any tools or visualization, it should be text-only methods. The last step should always be #Finally Rewritten Instruction#.
 
 Step N-1:
 #Rewritten Instruction#
@@ -55,9 +55,13 @@ class WizardOptimizer(BaseOptimizer):
                 parsed_steps = parse_steps(evolved_method)
                 new_method = evolver.build_new_method(parsed_steps, instruction)
                 evolved_instruction = await self.generator.agenerate(prompt=new_method, temperature=0.2)
-                parsed_evolved_instruction = parse_steps(evolved_instruction)[-1]['step_instruction']
-                response = await self.generator.agenerate(prompt=parsed_evolved_instruction, temperature=0.2)
-                return parsed_evolved_instruction, response
+                try:
+                    parsed_evolved_instruction = parse_steps(evolved_instruction)[-1]['step_instruction']
+                    response = await self.generator.agenerate(prompt=parsed_evolved_instruction, temperature=0.2)
+                    return parsed_evolved_instruction, response
+                except:
+                    response = await self.generator.agenerate(prompt=parsed_evolved_instruction, temperature=0.2)
+                    return instruction, response
 
             results = await asyncio.gather(*[process_instruction(instruction) for instruction in development_set])
             evolved_instructions, responses = zip(*results)

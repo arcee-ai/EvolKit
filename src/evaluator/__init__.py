@@ -1,2 +1,3 @@
 from .base_evaluator import BaseEvaluator
 from .failure_detector_evaluator import FailureDetectorEvaluator
+from .reward_model_evaluator import RewardModelEvaluator
