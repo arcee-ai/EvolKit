@@ -1,0 +1,8 @@
+asyncio
+transformers
+datasets
+torch
+pytest
+pytest-asyncio
+openai
+einops
