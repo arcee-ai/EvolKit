@@ -17,7 +17,7 @@ class OpenRouterGenerator(OpenAIGenerator):
     def generate(self, prompt: str, system_prompt: str = "You are a helpful AI assistant.", temperature: float = 0.5):
         return super().generate(prompt, system_prompt, temperature)
     
-    async def agenerate(self, prompt: str, system_prompt: str = "You are a helpful AI assistant.", temperature: float = 0.5):
+    async def agenerate(self, prompt: str, system_prompt: str = "You are a helpful AI assistant.", temperature: float = 0.2):
         response = await self.aclient.chat.completions.create(
             model=self.model,
             messages=[

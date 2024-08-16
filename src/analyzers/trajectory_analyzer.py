@@ -1,4 +1,4 @@
-import concurrent.futures
+import asyncio
 from typing import List
 
 from .base_analyzer import BaseAnalyzer
@@ -34,21 +34,21 @@ class TrajectoryAnalyzer(BaseAnalyzer):
     def __init__(self, generator: BaseGenerator) -> None:
         self.generator = generator
         
-    def analyze(self, init_instruction: str, evolved_instructions: List[str]) -> List[str]:
-        
-        
-        def generate_single(evolved_instruction):
-            trajectory_str = """
-            Stage 0: {stage_0}
-            Stage 1: {stage_1}
-            """.format(stage_0=init_instruction, stage_1=evolved_instruction)
+    async def analyze_async(self, init_instruction: str, evolved_instructions: List[str]) -> List[str]:
+        async def generate_single(evolved_instruction):
+            trajectory_str = f"""
+            Stage 0: {init_instruction}
+            Stage 1: {evolved_instruction}
+            """
             trajectory_prompt = TRAJECTORY_ANALYZER_PROMPT.format(evol_trajectory=trajectory_str)
-            feedback = self.generator.generate(prompt=trajectory_prompt, system_prompt=TRAJECTORY_ANALYZER_SYSTEM_PROMPT, temperature=0.7)
+            feedback = await self.generator.agenerate(prompt=trajectory_prompt, system_prompt=TRAJECTORY_ANALYZER_SYSTEM_PROMPT, temperature=0.2)
             
             return feedback
         
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(generate_single, evolved_instruction) for evolved_instruction in evolved_instructions]
-            results = [future.result() for future in concurrent.futures.as_completed(futures)]
+        tasks = [generate_single(evolved_instruction) for evolved_instruction in evolved_instructions]
+        results = await asyncio.gather(*tasks)
         
         return results
+    
+    def analyze(self, init_instruction: str, evolved_instructions: List[str]) -> List[str]:
+        return asyncio.run(self.analyze_async(init_instruction, evolved_instructions))
