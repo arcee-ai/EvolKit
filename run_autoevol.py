@@ -63,13 +63,13 @@ async def main():
     train_set, dev_set = load_and_process_dataset(args.dataset, args.dev_set_size)
     
     components = {
-        'generator': OpenRouterGenerator(model='anthropic/claude-3.5-sonnet:beta'),
-        'evolver': RecurrentEvolver(OpenRouterGenerator(model='anthropic/claude-3.5-sonnet:beta')),
-        'analyzer': TrajectoryAnalyzer(OpenRouterGenerator(model='openai/gpt-4o')),
+        'generator': OpenRouterGenerator(model='Qwen/Qwen2-72B-Instruct-AWQ'),
+        'evolver': RecurrentEvolver(OpenRouterGenerator(model='Qwen/Qwen2-72B-Instruct-AWQ')),
+        'analyzer': TrajectoryAnalyzer(OpenRouterGenerator(model='Qwen/Qwen2-72B-Instruct-AWQ')),
         'evaluator': RewardModelEvaluator() if args.use_reward_model else FailureDetectorEvaluator(),
         'dev_set': dev_set
     }
-    components['optimizer'] = WizardOptimizer(OpenRouterGenerator(model='openai/gpt-4o'), components['evaluator'])
+    components['optimizer'] = WizardOptimizer(OpenRouterGenerator(model='Qwen/Qwen2-72B-Instruct-AWQ'), components['evaluator'])
     
     auto_evol = AutoEvol(components)
     
