@@ -3,6 +3,7 @@ accelerate
 transformers
 datasets
 torch
+protobuf
 pytest
 pytest-asyncio
 openai

@@ -52,7 +52,7 @@ class AutoEvol:
             
             stage_result["optimized_method"] = optimized_method
 
-            evolved_instruction = await self.components['generator'].agenerate(prompt=optimized_method, temperature=0.2)
+            evolved_instruction = await self.components['generator'].agenerate(prompt=optimized_method, temperature=0.5)
             evolved_instruction_steps = parse_steps(evolved_instruction)
             
             try:

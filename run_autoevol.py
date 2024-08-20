@@ -3,7 +3,7 @@ import json
 import asyncio
 import argparse
 from datasets import load_dataset
-from src.generators import OpenRouterGenerator
+from src.generators import OpenRouterGenerator, VLLMGenerator
 from src.evolvers import RecurrentEvolver
 from src.analyzers import TrajectoryAnalyzer
 from src.evaluator import FailureDetectorEvaluator, RewardModelEvaluator
@@ -63,13 +63,13 @@ async def main():
     train_set, dev_set = load_and_process_dataset(args.dataset, args.dev_set_size)
     
     components = {
-        'generator': OpenRouterGenerator(model='Qwen/Qwen2-72B-Instruct-AWQ'),
-        'evolver': RecurrentEvolver(OpenRouterGenerator(model='Qwen/Qwen2-72B-Instruct-AWQ')),
-        'analyzer': TrajectoryAnalyzer(OpenRouterGenerator(model='Qwen/Qwen2-72B-Instruct-AWQ')),
+        'generator': VLLMGenerator(model='Qwen/Qwen2-72B-Instruct-GPTQ-Int8'),
+        'evolver': RecurrentEvolver(VLLMGenerator(model='Qwen/Qwen2-72B-Instruct-GPTQ-Int8')),
+        'analyzer': TrajectoryAnalyzer(VLLMGenerator(model='Qwen/Qwen2-72B-Instruct-GPTQ-Int8')),
         'evaluator': RewardModelEvaluator() if args.use_reward_model else FailureDetectorEvaluator(),
         'dev_set': dev_set
     }
-    components['optimizer'] = WizardOptimizer(OpenRouterGenerator(model='Qwen/Qwen2-72B-Instruct-AWQ'), components['evaluator'])
+    components['optimizer'] = WizardOptimizer(VLLMGenerator(model='Qwen/Qwen2-72B-Instruct-GPTQ-Int8'), components['evaluator'])
     
     auto_evol = AutoEvol(components)
     

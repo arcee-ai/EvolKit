@@ -18,6 +18,7 @@ Current Method:
 {current_method}
 
 **Output Instructions**
+Add more steps to achieve the most refined method if needed, however, REMEMBER that the final step in your output has to be "#Finally Rewritten Instruction#" no matter how many steps are added.
 Please generate the optimized method strictly using ONLY the given below format, do not add anything else:
 
 ```Optimized Method
@@ -49,19 +50,45 @@ class WizardOptimizer(BaseOptimizer):
     async def optimize(self, current_method: str, feedback: List[str], evolver: RecurrentEvolver, development_set: Optional[List] = None):
         async def generate_and_evaluate(feedback_item):
             optimized_prompt = METHOD_EVOL_PROMPT.format(current_method=current_method, feedback=feedback_item)
-            evolved_method = await self.generator.agenerate(optimized_prompt, temperature=0.2)
+            evolved_method = await self.generator.agenerate(optimized_prompt, temperature=0.5)
 
             async def process_instruction(instruction):
-                parsed_steps = parse_steps(evolved_method)
-                new_method = evolver.build_new_method(parsed_steps, instruction)
-                evolved_instruction = await self.generator.agenerate(prompt=new_method, temperature=0.2)
+                async def generate_with_timeout(prompt, temperature):
+                    try:
+                        return await asyncio.wait_for(
+                            self.generator.agenerate(prompt=prompt, temperature=temperature),
+                            timeout=60.0  # 60 seconds timeout
+                        )
+                    except asyncio.TimeoutError:
+                        return None
                 try:
-                    parsed_evolved_instruction = parse_steps(evolved_instruction)[-1]['step_instruction']
-                    response = await self.generator.agenerate(prompt=parsed_evolved_instruction, temperature=0.2)
+                    parsed_steps = parse_steps(evolved_method)
+                    new_method = evolver.build_new_method(parsed_steps, instruction)
+                    
+                    evolved_instruction = await generate_with_timeout(new_method, 0.2)
+                    if evolved_instruction is None:
+                        # print('bad')
+                        return instruction, "error response"
+                    
+                    try:
+                        parsed_evolved_instruction = parse_steps(evolved_instruction)[-1]['step_instruction']
+                    except:
+                        fallback_response = await generate_with_timeout(instruction, 0.5)
+                        if fallback_response is None:
+                            # print('bad')
+                            return instruction, "error response"
+                        return instruction, fallback_response
+                    response = await generate_with_timeout(parsed_evolved_instruction, 0.5)
+                    if response is None:
+                        # print('bad')
+                        return instruction, "error response"
+                    
+                    # print('good')
                     return parsed_evolved_instruction, response
                 except:
-                    response = await self.generator.agenerate(prompt=instruction, temperature=0.2)
-                    return instruction, response
+                    # print('bad')
+                    return instruction, "error response"
+        
 
             results = await asyncio.gather(*[process_instruction(instruction) for instruction in development_set])
             evolved_instructions, responses = zip(*results)
@@ -71,7 +98,7 @@ class WizardOptimizer(BaseOptimizer):
         results = await asyncio.gather(*[generate_and_evaluate(item) for item in feedback])
         evolved_methods, all_evolved_instructions, all_responses = zip(*results)
 
-        best_method, best_score = self.evaluator.select_best_method(
+        best_method, best_score = await self.evaluator.select_best_method(
             evolved_methods, 
             [instr for method_instructions in all_evolved_instructions for instr in method_instructions],
             [resp for method_responses in all_responses for resp in method_responses]
