@@ -18,12 +18,15 @@ class OpenRouterGenerator(OpenAIGenerator):
         return super().generate(prompt, system_prompt, temperature)
     
     async def agenerate(self, prompt: str, system_prompt: str = "You are a helpful AI assistant.", temperature: float = 0.2):
-        response = await self.aclient.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=temperature,)
-        # print(response.choices[0].message.content) # For Debuging
-        return response.choices[0].message.content
+        try:
+            response = await self.aclient.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=temperature,)
+            # print(response.choices[0].message.content) # For Debuging
+            return response.choices[0].message.content
+        except:
+            return 'error'

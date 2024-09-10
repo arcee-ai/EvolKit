@@ -3,7 +3,6 @@ import time
 from typing import List, Dict, Any
 from src.evolvers.recurrent_evolver import INITIAL_EVOLVE_METHOD
 from .utils import parse_steps
-from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 
 class AutoEvol:
@@ -44,7 +43,7 @@ class AutoEvol:
                 current_method, 
                 feedback=feedbacks, 
                 evolver=self.components['evolver'], 
-                development_set=self.components['dev_set']
+                development_set=self.components['dev_set'] if len(self.components['dev_set']) > 0 else [instruction_stages[-1]]
             )
             
             optimized_method_steps = parse_steps(optimized_method)

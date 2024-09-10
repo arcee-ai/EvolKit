@@ -1,13 +1,11 @@
 from .base_optimizer import BaseOptimizer
-from src.evolvers import BaseEvolver, RecurrentEvolver
-from src.evaluator import FailureDetectorEvaluator, BaseEvaluator
-from src.generators import OpenAIGenerator, OpenRouterGenerator, BaseGenerator
+from src.evolvers import RecurrentEvolver
+from src.evaluator import BaseEvaluator
+from src.generators import BaseGenerator
 from src.utils import parse_steps
 
-import concurrent.futures
 from typing import List, Optional
 import asyncio
-import random
 
 METHOD_EVOL_PROMPT = """
 Feedback: {feedback}
@@ -42,7 +40,7 @@ Do not generate new Instruction here, but please provide the process to write th
 ```
 """
 
-class WizardOptimizer(BaseOptimizer):
+class EvolOptimizer(BaseOptimizer):
     def __init__(self, generator: BaseGenerator, evaluator: BaseEvaluator) -> None:
         self.generator = generator
         self.evaluator = evaluator

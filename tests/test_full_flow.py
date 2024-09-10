@@ -1,7 +1,7 @@
 import asyncio
 from typing import List
 from src.generators import OpenRouterGenerator
-from src.optimizers.wizard_optimizer import WizardOptimizer
+from src.optimizers.evol_optimizer import EvolOptimizer
 from src.analyzers.trajectory_analyzer import TrajectoryAnalyzer
 from src.evolvers.recurrent_evolver import RecurrentEvolver, INITIAL_EVOLVE_METHOD
 from src.evaluator.failure_detector_evaluator import FailureDetectorEvaluator
@@ -48,7 +48,7 @@ async def process_dataset(dataset: List[str], dev_set: List[str]) -> List[List[s
         'detector': FailureDetectorEvaluator(),
         'dev_set': dev_set
     }
-    components['optimizer'] = WizardOptimizer(components['generator'], components['detector'])
+    components['optimizer'] = EvolOptimizer(components['generator'], components['detector'])
     
     print("Initialized all components")
 

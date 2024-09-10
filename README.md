@@ -1,6 +1,6 @@
-# OpenAutoEvol
+# EvolKit
 
-OpenAutoEvol is an innovative framework for automatically enhancing the complexity of instructions used in fine-tuning Large Language Models (LLMs). Our project aims to revolutionize the evolution process by leveraging open-source LLMs, moving away from closed-source alternatives.
+EvolKit is an innovative framework for automatically enhancing the complexity of instructions used in fine-tuning Large Language Models (LLMs). Our project aims to revolutionize the evolution process by leveraging open-source LLMs, moving away from closed-source alternatives.
 
 ## Key Features
 
@@ -12,12 +12,12 @@ OpenAutoEvol is an innovative framework for automatically enhancing the complexi
 
 ## Installation
 
-To set up OpenAutoEvol, follow these steps:
+To set up EvolKit, follow these steps:
 
 1. Clone the repository:
    ```
-   git clone https://github.com/your-username/OpenAutoEvol.git
-   cd OpenAutoEvol
+   git clone https://github.com/your-username/EvolKit.git
+   cd EvolKit
    ```
 
 2. Install the required dependencies:
@@ -30,7 +30,7 @@ To set up OpenAutoEvol, follow these steps:
 To run the AutoEvol script, use the following command structure:
 
 ```bash
-python run_autoevol.py --dataset <dataset_name> [options]
+python run_evol.py --dataset <dataset_name> [options]
 ```
 
 ### Required Parameters:
@@ -44,16 +44,16 @@ python run_autoevol.py --dataset <dataset_name> [options]
 - `--num_methods <int>`: Number of evolution methods to use. Default is 3.
 - `--max_concurrent_batches <int>`: Maximum number of batches to process concurrently. Default is 5.
 - `--evolve_epoch <int>`: Maximum number of epochs for evolving each instruction. Default is 3.
-- `--dev_set_size <int>`: Number of samples to use in the development set. Default is 5.
+- `--dev_set_size <int> (optional)`: Number of samples to use in the development set. Default is 5.
 - `--output_file <filename>`: Name of the output file to save results. Default is 'output.json'.
-- `--use_reward_model`: Flag to use a reward model for finding the best method each round. No value required.
+- `--use_reward_model (optional)`: Flag to use a reward model for finding the best method each round. No value required.
 
 ### Example Usage:
 
 To run AutoEvol on the 'small_tomb' dataset with custom parameters:
 
 ```bash
-python run_autoevol.py --dataset qnguyen3/small_tomb --batch_size 100 --mini_batch_size 10 --num_methods 3 --max_concurrent_batches 10 --evolve_epoch 3 --dev_set_size 3 --output_file the_tomb_evolved-3e-batch100.json --use_reward_model
+python run_autoevol.py --dataset qnguyen3/small_tomb --batch_size 100 --mini_batch_size 10 --num_methods 3 --max_concurrent_batches 10 --evolve_epoch 3 --output_file the_tomb_evolved-3e-batch100.json --use_reward_model
 ```
 
 This command will:
@@ -66,21 +66,32 @@ This command will:
 7. Use the reward model for evaluation.
 8. Output the final evolved instructions to `the_tomb_evolved-3e-batch100.json`.
 
+After you are done with evolving the instructions, you can start generate answers for those using:
+
+```bash
+python gen_answers.py --data_path the_tomb_evolved-3e-batch100.json --batch_size 50 --output completed_evol_data.json
+```
+
+After you are done, the final dataset will be saved to `completed_evol_data.json` in ShareGPT format.
+
 ## Components
 
-OpenAutoEvol consists of several key components:
+EvolKit consists of several key components:
 
-- **Generator**: Uses the Claude 3.5 Sonnet model for generating initial instructions.
-- **Evolver**: Employs a recurrent evolution strategy with Claude 3.5 Sonnet.
-- **Analyzer**: Utilizes GPT-4 for trajectory analysis.
+- **Generator**: Uses an LLM for generating initial instructions.
+- **Evolver**: Employs a recurrent evolution strategy.
+- **Analyzer**: Utilizes trajectory analysis.
 - **Evaluator**: Offers two options:
   - Reward Model Evaluator
   - Failure Detector Evaluator
-- **Optimizer**: Implements a Wizard Optimizer using GPT-4.
+- **Optimizer**: This is the last step to optimize the evolution method for the next round.
 
 ## Output
 
 The script saves the results in JSON format to the specified output file. Each entry in the JSON file represents an evolved instruction along with relevant metadata.
+
+## Acknowledgement
+- Microsoft's WizardLM team for the inspiration from the [AutoEvol paper](https://arxiv.org/pdf/2406.00770).
 
 ## License
 

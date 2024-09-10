@@ -7,7 +7,7 @@ from src.generators import OpenRouterGenerator, VLLMGenerator
 from src.evolvers import RecurrentEvolver
 from src.analyzers import TrajectoryAnalyzer
 from src.evaluator import FailureDetectorEvaluator, RewardModelEvaluator
-from src.optimizers.wizard_optimizer import WizardOptimizer
+from src.optimizers.evol_optimizer import EvolOptimizer
 from src import AutoEvol
 
 def load_and_process_dataset(dataset_name, dev_set_size=5):
@@ -34,12 +34,15 @@ def load_and_process_dataset(dataset_name, dev_set_size=5):
             if turn['from'] == 'human':
                 full_filtered.append(turn['value'])
                 break
-        
-    # Split the dataset
-    train_instructions = full_filtered[dev_set_size:]
-    dev_instructions = full_filtered[:dev_set_size]
     
-    return train_instructions, dev_instructions
+    if dev_set_size != -1:
+        # Split the dataset
+        train_instructions = full_filtered[dev_set_size:]
+        dev_instructions = full_filtered[:dev_set_size]
+        
+        return train_instructions, dev_instructions
+    else: 
+        return full_filtered, []
     
 async def save_results(results, output_file):
     with open(output_file, 'w') as f:
@@ -49,11 +52,10 @@ async def main():
     parser = argparse.ArgumentParser(description="Run AutoEvol with specified parameters")
     parser.add_argument("--dataset", help="Name of the dataset on Hugging Face")
     parser.add_argument("--batch_size", type=int, default=5, help="Batch size for processing")
-    parser.add_argument("--mini_batch_size", type=int, default=5, help="Batch size for processing")
     parser.add_argument("--num_methods", type=int, default=3, help="Number of methods to use")
     parser.add_argument("--max_concurrent_batches", type=int, default=5, help="Maximum number of concurrent batches")
     parser.add_argument("--evolve_epoch", type=int, default=3, help="Maximum number of epoch for each instruction")
-    parser.add_argument("--dev_set_size", type=int, default=5, help="Maximum samples for dev set")
+    parser.add_argument("--dev_set_size", type=int, default=-1, help="Maximum samples for dev set")
     parser.add_argument("--output_file", type=str, default='output.json', help="Name of output file")
     parser.add_argument("--use_reward_model", action="store_true", help="just a flag argument")
     
@@ -69,12 +71,15 @@ async def main():
         'evaluator': RewardModelEvaluator() if args.use_reward_model else FailureDetectorEvaluator(),
         'dev_set': dev_set
     }
-    components['optimizer'] = WizardOptimizer(VLLMGenerator(model='Qwen/Qwen2-72B-Instruct-GPTQ-Int8'), components['evaluator'])
+    components['optimizer'] = EvolOptimizer(VLLMGenerator(model='Qwen/Qwen2-72B-Instruct-GPTQ-Int8'), components['evaluator'])
     
     auto_evol = AutoEvol(components)
     
     print(f"Dataset: {args.dataset}")
-    print(f"Train set size: {len(train_set)}, Dev set size: {len(dev_set)}")
+    if args.dev_set_size != -1:
+        print(f"Train set size: {len(train_set)}, Dev set size: {len(dev_set)}")
+    else:
+        print(f"Train set size: {len(train_set)}")
     print(f"Batch size: {args.batch_size}")
     print(f"Number of methods: {args.num_methods}")
     print(f"Max concurrent batches: {args.max_concurrent_batches}")
@@ -88,7 +93,7 @@ async def main():
 
     for i in range(0, len(train_set), args.batch_size):
         batch = train_set[i:i+args.batch_size]
-        batch_results = await auto_evol.run(batch, batch_size=args.mini_batch_size, num_methods=args.num_methods, max_concurrent_batches=args.max_concurrent_batches, evolve_epoch=args.evolve_epoch)
+        batch_results = await auto_evol.run(batch, batch_size=args.batch_size, num_methods=args.num_methods, max_concurrent_batches=args.max_concurrent_batches, evolve_epoch=args.evolve_epoch)
         all_results.extend(batch_results)
         
         current_batch = i // args.batch_size + 1
