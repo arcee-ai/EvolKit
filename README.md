@@ -103,7 +103,7 @@ EvolKit consists of several key components:
 - **Analyzer**: Utilizes trajectory analysis.
 - **Evaluator**: Offers two options:
   - Reward Model Evaluator
-  - Failure Detector Evaluator
+  - Failure Detector Evaluator (originally from WizardLM's paper)
 - **Optimizer**: Optimizes the evolution method for the next round.
 
 ## Output
