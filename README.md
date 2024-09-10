@@ -40,9 +40,9 @@ python run_evol.py --dataset <dataset_name> [options]
 - `--dataset <dataset_name>`: The name of the dataset on Hugging Face to use.
 - `--model <model_name>`: Model to use for evolving instructions.
 - `--generator <generator_type>`: Type of generator to use ('openrouter' or 'vllm').
-- `--batch_size <int>`: Number of instructions to process in each batch (in our experiment, a cluster of 8xH100 hosting Qwen2-72B-Instruct-GPTQ-Int8 can handle batch size of 50)
+- `--batch_size <int>`: Number of instructions to process in each batch.
 - `--num_methods <int>`: Number of evolution methods to use.
-- `--max_concurrent_batches <int>`: Maximum number of batches to process concurrently.
+- `--max_concurrent_batches <int>`: Maximum number of batches to process concurrently (in our experiment, a cluster of 8xH100 hosting Qwen2-72B-Instruct-GPTQ-Int8 can handle batch size of 50 concurrently).
 - `--evolve_epoch <int>`: Maximum number of epochs for evolving each instruction.
 - `--output_file <filename>`: Name of the output file to save results.
 
