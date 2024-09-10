@@ -2,12 +2,13 @@ import asyncio
 import json
 import argparse
 from typing import List, Dict
-from src.generators import OpenRouterGenerator
+from src.generators import OpenRouterGenerator, VLLMGenerator, BaseGenerator
 from datasets import load_dataset
 from tqdm import tqdm
 import time
+from os import getenv
 
-async def process_batch(generator: OpenRouterGenerator, batch: List[str], system_prompt: str) -> List[Dict]:
+async def process_batch(generator: BaseGenerator, batch: List[str], system_prompt: str) -> List[Dict]:
     tasks = []
     for item in batch:
         try:
@@ -30,9 +31,12 @@ async def process_batch(generator: OpenRouterGenerator, batch: List[str], system
     
     return processed_items
 
-async def process_data(file_path: str, batch_size: int, output_file: str):
+async def process_data(model:str, generator_str: str, file_path: str, batch_size: int, output_file: str):
     # Initialize OpenRouterGenerator
-    generator = OpenRouterGenerator(model='Qwen/Qwen2-72B-Instruct-GPTQ-Int8')
+    generator = (
+        VLLMGenerator(model=model, base_url=getenv('VLLM_BACKEND') or 'http://localhost:8000/v1') 
+        if generator_str == 'vllm' 
+        else OpenRouterGenerator(model=model))
     
     # Load data
     if '.json' not in file_path:
@@ -76,13 +80,15 @@ async def process_data(file_path: str, batch_size: int, output_file: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Process data using OpenRouterGenerator")
-    parser.add_argument("--data_path", help="Path to the JSON file or Hugging Face dataset repo")
+    parser.add_argument("--model", type=str, required=True, help="Model use to evol instructions.")
+    parser.add_argument("--generator", type=str, required=True, choices=['openrouter', 'vllm'], help="Type of generator to use.")
+    parser.add_argument("--data_path", required=True, help="Path to the JSON file or Hugging Face dataset repo")
     parser.add_argument("--batch_size", type=int, default=10, help="Batch size for processing")
     parser.add_argument("--output", default="final_evolved_data.json", help="Output file path")
     
     args = parser.parse_args()
     
-    asyncio.run(process_data(args.data_path, args.batch_size, args.output))
+    asyncio.run(process_data(args.model, args.generator, args.data_path, args.batch_size, args.output))
 
 if __name__ == "__main__":
     main()

@@ -89,7 +89,7 @@ This command will:
 After evolving the instructions, you can generate answers using:
 
 ```
-python gen_answers.py --data_path the_tomb_evolved-3e-batch100.json --batch_size 50 --output completed_evol_data.json
+python gen_answers.py --model Qwen/Qwen2-72B-Instruct-GPTQ-Int8 --generator vllm --data_path the_tomb_evolved-3e-batch100.json --batch_size 50 --output completed_evol_data.json
 ```
 
 The final dataset will be saved to completed_evol_data.json in ShareGPT format.

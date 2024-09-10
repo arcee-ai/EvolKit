@@ -73,7 +73,7 @@ async def main():
     VLLMGenerator(model=args.model, base_url=getenv('VLLM_BACKEND') or 'http://localhost:8000/v1') 
     if args.generator == 'vllm' 
     else OpenRouterGenerator(model=args.model)
-)
+    )
 
 
     components = {
