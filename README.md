@@ -1,6 +1,6 @@
 # EvolKit
 
-EvolKit is an innovative framework for automatically enhancing the complexity of instructions used in fine-tuning Large Language Models (LLMs). Our project aims to revolutionize the evolution process by leveraging open-source LLMs, moving away from closed-source alternatives.
+EvolKit is an framework for automatically enhancing the complexity of instructions used in fine-tuning Large Language Models (LLMs). Our project aims to revolutionize the evolution process by leveraging open-source LLMs, moving away from closed-source alternatives.
 
 ## Key Features
 
@@ -53,9 +53,9 @@ python run_evol.py --dataset <dataset_name> [options]
 
 ### Models
 
-We found 2 models work the best:
+We found 2 models that work very well with this pipeline:
 - Qwen2-72B-Instruct and DeepSeek-V2.5 (GPTQ and AWQ versions are fine too).
-- Other models might works but it has to be very good at generating structured content (in order to parse using parsing operations)
+- Other models might work but it has to be very good at generating structured content (in order to parse using parsing operations)
 
 ### VLLM Support
 
@@ -109,6 +109,8 @@ EvolKit consists of several key components:
 ## Output
 
 The script saves the results in JSON format to the specified output file. Each entry in the JSON file represents an evolved instruction along with relevant metadata.
+
+Find a 20k subset of a dataset generated using EvolKit [here](https://huggingface.co/datasets/arcee-ai/EvolKit-20k)
 
 ## Acknowledgement
 - Microsoft's WizardLM team for the inspiration from the [AutoEvol paper](https://arxiv.org/pdf/2406.00770).
