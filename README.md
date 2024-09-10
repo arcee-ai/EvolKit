@@ -15,12 +15,14 @@ EvolKit is an innovative framework for automatically enhancing the complexity of
 To set up EvolKit, follow these steps:
 
 1. Clone the repository:
+   
    ```
-   git clone https://github.com/your-username/EvolKit.git
+   git clone https://github.com/arcee-ai/EvolKit.git
    cd EvolKit
    ```
 
 2. Install the required dependencies:
+   
    ```
    pip install -r requirements.txt
    ```
@@ -29,62 +31,80 @@ To set up EvolKit, follow these steps:
 
 To run the AutoEvol script, use the following command structure:
 
-```bash
+```
 python run_evol.py --dataset <dataset_name> [options]
 ```
 
 ### Required Parameters:
 
 - `--dataset <dataset_name>`: The name of the dataset on Hugging Face to use.
+- `--model <model_name>`: Model to use for evolving instructions.
+- `--generator <generator_type>`: Type of generator to use ('openrouter' or 'vllm').
+- `--batch_size <int>`: Number of instructions to process in each batch.
+- `--num_methods <int>`: Number of evolution methods to use.
+- `--max_concurrent_batches <int>`: Maximum number of batches to process concurrently.
+- `--evolve_epoch <int>`: Maximum number of epochs for evolving each instruction.
+- `--output_file <filename>`: Name of the output file to save results.
 
 ### Optional Parameters:
 
-- `--batch_size <int>`: Number of instructions to process in each batch. Default is 5.
-- `--mini_batch_size <int>`: Number of instructions to process in each mini-batch. Default is 5.
-- `--num_methods <int>`: Number of evolution methods to use. Default is 3.
-- `--max_concurrent_batches <int>`: Maximum number of batches to process concurrently. Default is 5.
-- `--evolve_epoch <int>`: Maximum number of epochs for evolving each instruction. Default is 3.
-- `--dev_set_size <int> (optional)`: Number of samples to use in the development set. Default is 5.
-- `--output_file <filename>`: Name of the output file to save results. Default is 'output.json'.
-- `--use_reward_model (optional)`: Flag to use a reward model for finding the best method each round. No value required.
+- `--dev_set_size <int>`: Number of samples to use in the development set. Use -1 for no dev set. Default is -1.
+- `--use_reward_model`: Flag to use a reward model for evaluation. No value required.
+
+### Models
+
+We found 2 models work the best:
+- Qwen2-72B-Instruct and DeepSeek-V2.5 (GPTQ and AWQ versions are fine too).
+- Other models might works but it has to be very good at generating structured content (in order to parse using parsing operations)
+
+### VLLM Support
+
+To use VLLM as the backend, set the `VLLM_BACKEND` environment variable:
+
+```
+export VLLM_BACKEND=http://your-vllm-backend-url:port/v1
+```
+
+If not set, it will default to 'http://localhost:8000/v1'.
 
 ### Example Usage:
 
 To run AutoEvol on the 'small_tomb' dataset with custom parameters:
 
-```bash
-python run_autoevol.py --dataset qnguyen3/small_tomb --batch_size 100 --mini_batch_size 10 --num_methods 3 --max_concurrent_batches 10 --evolve_epoch 3 --output_file the_tomb_evolved-3e-batch100.json --use_reward_model
+```
+python run_evol.py --dataset qnguyen3/small_tomb --model Qwen/Qwen2-72B-Instruct-GPTQ-Int8 --generator vllm --batch_size 100 --num_methods 3 --max_concurrent_batches 10 --evolve_epoch 3 --output_file the_tomb_evolved-3e-batch100.json --dev_set_size 5 --use_reward_model
 ```
 
 This command will:
 1. Load the 'qnguyen3/small_tomb' dataset from Hugging Face.
-2. Use 3 samples for the development set.
-3. Process the remaining samples in the training set.
-4. Use a batch size of 100 for processing, with mini-batches of 10.
-5. Apply 3 evolution methods for each sample in the development set to find the best method.
-6. Process 10 mini-batches (10*10=100 samples) concurrently.
-7. Use the reward model for evaluation.
-8. Output the final evolved instructions to `the_tomb_evolved-3e-batch100.json`.
+2. Use the Qwen2-72B-Instruct model with VLLM as the generator.
+3. Process samples in batches of 100.
+4. Apply 3 evolution methods for each instruction.
+5. Process 10 batches concurrently.
+6. Evolve each instruction for up to 3 epochs.
+7. Use 5 samples for the development set.
+8. Use the reward model for evaluation.
+9. Output the final evolved instructions to the_tomb_evolved-3e-batch100.json.
 
-After you are done with evolving the instructions, you can start generate answers for those using:
+After evolving the instructions, you can generate answers using:
 
-```bash
+```
 python gen_answers.py --data_path the_tomb_evolved-3e-batch100.json --batch_size 50 --output completed_evol_data.json
 ```
 
-After you are done, the final dataset will be saved to `completed_evol_data.json` in ShareGPT format.
+The final dataset will be saved to completed_evol_data.json in ShareGPT format.
 
 ## Components
 
 EvolKit consists of several key components:
 
-- **Generator**: Uses an LLM for generating initial instructions.
+- **Generator**: Uses an LLM for generating initial instructions (OpenRouter or VLLM).
 - **Evolver**: Employs a recurrent evolution strategy.
 - **Analyzer**: Utilizes trajectory analysis.
 - **Evaluator**: Offers two options:
   - Reward Model Evaluator
   - Failure Detector Evaluator
-- **Optimizer**: This is the last step to optimize the evolution method for the next round.
+- **Optimizer**: Optimizes the evolution method for the next round.
 
 ## Output
 
@@ -92,7 +112,3 @@ The script saves the results in JSON format to the specified output file. Each e
 
 ## Acknowledgement
 - Microsoft's WizardLM team for the inspiration from the [AutoEvol paper](https://arxiv.org/pdf/2406.00770).
-
-## License
-
-[Specify your chosen license information here]

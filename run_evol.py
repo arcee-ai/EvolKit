@@ -9,6 +9,7 @@ from src.analyzers import TrajectoryAnalyzer
 from src.evaluator import FailureDetectorEvaluator, RewardModelEvaluator
 from src.optimizers.evol_optimizer import EvolOptimizer
 from src import AutoEvol
+from os import getenv
 
 def load_and_process_dataset(dataset_name, dev_set_size=5):
     # Load the dataset from Hugging Face
@@ -50,28 +51,39 @@ async def save_results(results, output_file):
 
 async def main():
     parser = argparse.ArgumentParser(description="Run AutoEvol with specified parameters")
-    parser.add_argument("--dataset", help="Name of the dataset on Hugging Face")
-    parser.add_argument("--batch_size", type=int, default=5, help="Batch size for processing")
-    parser.add_argument("--num_methods", type=int, default=3, help="Number of methods to use")
-    parser.add_argument("--max_concurrent_batches", type=int, default=5, help="Maximum number of concurrent batches")
-    parser.add_argument("--evolve_epoch", type=int, default=3, help="Maximum number of epoch for each instruction")
-    parser.add_argument("--dev_set_size", type=int, default=-1, help="Maximum samples for dev set")
-    parser.add_argument("--output_file", type=str, default='output.json', help="Name of output file")
-    parser.add_argument("--use_reward_model", action="store_true", help="just a flag argument")
+    parser.add_argument("--dataset", required=True, help="Name of the dataset on Hugging Face")
+    parser.add_argument("--model", type=str, required=True, help="Model use to evol instructions.")
+    parser.add_argument("--generator", type=str, required=True, choices=['openrouter', 'vllm'], help="Type of generator to use.")
+    parser.add_argument("--batch_size", type=int, required=True, help="Batch size for processing")
+    parser.add_argument("--num_methods", type=int, required=True, help="Number of methods to use")
+    parser.add_argument("--max_concurrent_batches", type=int, required=True, help="Maximum number of concurrent batches")
+    parser.add_argument("--evolve_epoch", type=int, required=True, help="Maximum number of epoch for each instruction")
+    parser.add_argument("--output_file", type=str, required=True, help="Name of output file")
+    
+    # Optional arguments
+    parser.add_argument("--dev_set_size", type=int, default=-1, help="Maximum samples for dev set. Use -1 for no dev set.")
+    parser.add_argument("--use_reward_model", action="store_true", help="Use reward model for evaluation")
     
     args = parser.parse_args()
     
     # Load and process the dataset
     train_set, dev_set = load_and_process_dataset(args.dataset, args.dev_set_size)
     
+    generator = (
+    VLLMGenerator(model=args.model, base_url=getenv('VLLM_BACKEND') or 'http://localhost:8000/v1') 
+    if args.generator == 'vllm' 
+    else OpenRouterGenerator(model=args.model)
+)
+
+
     components = {
-        'generator': VLLMGenerator(model='Qwen/Qwen2-72B-Instruct-GPTQ-Int8'),
-        'evolver': RecurrentEvolver(VLLMGenerator(model='Qwen/Qwen2-72B-Instruct-GPTQ-Int8')),
-        'analyzer': TrajectoryAnalyzer(VLLMGenerator(model='Qwen/Qwen2-72B-Instruct-GPTQ-Int8')),
+        'generator': generator,
+        'evolver': RecurrentEvolver(generator),
+        'analyzer': TrajectoryAnalyzer(generator),
         'evaluator': RewardModelEvaluator() if args.use_reward_model else FailureDetectorEvaluator(),
         'dev_set': dev_set
     }
-    components['optimizer'] = EvolOptimizer(VLLMGenerator(model='Qwen/Qwen2-72B-Instruct-GPTQ-Int8'), components['evaluator'])
+    components['optimizer'] = EvolOptimizer(generator, components['evaluator'])
     
     auto_evol = AutoEvol(components)
     
