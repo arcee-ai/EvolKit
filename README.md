@@ -48,7 +48,7 @@ python run_evol.py --dataset <dataset_name> [options]
 
 ### Optional Parameters:
 
-- `--dev_set_size <int>`: Number of samples to use in the development set. Use -1 for no dev set. Default is -1.
+- `--dev_set_size <int>`: Number of samples to use in the development set. Use -1 for no devset. Default is -1. (We do not recommend using a dev set since it will take much more time to finish each round)
 - `--use_reward_model`: Flag to use a reward model for evaluation. No value required.
 
 ### Models
