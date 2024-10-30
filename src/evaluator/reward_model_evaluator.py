@@ -23,17 +23,21 @@ class RewardModelEvaluator(BaseEvaluator):
             {"role": "assistant", "content": response}
         ]
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(self.executor, self.model.get_score, self.tokenizer, chat)
+        score = await loop.run_in_executor(self.executor, self.model.get_score, self.tokenizer, chat)
+        torch.cuda.empty_cache()
+        return score
 
     async def evaluate(self, instructions: List[str], responses: List[str]) -> float:
         scores = await asyncio.gather(*[self.get_score(instruction, response) 
                                         for instruction, response in zip(instructions, responses)])
+        torch.cuda.empty_cache()
         return sum(scores) / len(scores)
 
     async def select_best_method(self, methods: List[str], instructions: List[str], responses: List[List[str]]) -> tuple:
         evaluation_tasks = [self.evaluate(instructions, method_responses) 
                             for method_responses in responses]
         scores = await asyncio.gather(*evaluation_tasks)
+        torch.cuda.empty_cache()
         
         best_index = max(range(len(scores)), key=scores.__getitem__)
         return methods[best_index], scores[best_index]
